@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { z } from "zod/v4";
 import { zocker } from "../../src";
 
@@ -17,20 +17,52 @@ const schema = z.object({
 	id: z.uuid(),
 	cuid: z.cuid(),
 	cuid2: z.cuid2(),
-	ulid: z.ulid(),
+	ulid: z.ulid()
+});
+
+const schemaWithDate = z.object({
 	date: z.iso.date(),
 	datetime: z.iso.datetime()
 });
 
-const refDate = new Date("2025-09-01T10:00:00");
-
 describe("repeatability", () => {
+	beforeEach(() => vi.useFakeTimers());
+	afterEach(() => vi.useRealTimers());
+
 	it("should generate identcal values for the same seed", () => {
 		const seed = 0;
-		const first = zocker(schema).setSeed(seed).setRefDate(refDate).generate();
+		const first = zocker(schema).setSeed(seed).generate();
 
 		for (let i = 0; i < 10; i++) {
-			const second = zocker(schema)
+			const second = zocker(schema).setSeed(seed).generate();
+			expect(second).toEqual(first);
+		}
+	});
+
+	it("should generate different values for different seeds", () => {
+		const first = zocker(schema).setSeed(0).generate();
+		const second = zocker(schema).setSeed(1).generate();
+
+		expect(first).not.toEqual(second);
+	});
+
+	it("should generate different values if the seed is not specified", () => {
+		const first = zocker(schema).generate();
+		const second = zocker(schema).generate();
+
+		expect(first).not.toEqual(second);
+	});
+
+	it("should generate identcal values for the same seed and refDate", () => {
+		const seed = 0;
+		const refDate = new Date("2025-09-01T10:00:00");
+		const first = zocker(schemaWithDate)
+			.setSeed(seed)
+			.setRefDate(refDate)
+			.generate();
+
+		for (let i = 0; i < 10; i++) {
+			const second = zocker(schemaWithDate)
 				.setSeed(seed)
 				.setRefDate(refDate)
 				.generate();
@@ -38,16 +70,30 @@ describe("repeatability", () => {
 		}
 	});
 
-	it("should generate different values for different seeds", () => {
-		const first = zocker(schema).setSeed(0).setRefDate(refDate).generate();
-		const second = zocker(schema).setSeed(1).setRefDate(refDate).generate();
+	it("should use current date as refDate", () => {
+		const firstDate = new Date("2000-01-01T00:00:00");
+		const secondDate = new Date("2025-09-01T10:00:00");
+		vi.setSystemTime(firstDate);
+		const first = zocker(schemaWithDate).setSeed(0).generate();
 
-		expect(first).not.toEqual(second);
+		vi.setSystemTime(secondDate);
+		const second = zocker(schemaWithDate)
+			.setSeed(0)
+			.setRefDate(firstDate)
+			.generate();
+
+		expect(first).toEqual(second);
 	});
 
-	it("should generate different values if the seed is not specified", () => {
-		const first = zocker(schema).setRefDate(refDate).generate();
-		const second = zocker(schema).setRefDate(refDate).generate();
+	it("should generate different values for different refDate", () => {
+		const first = zocker(schemaWithDate)
+			.setSeed(0)
+			.setRefDate(new Date("2000-01-01T00:00:00"))
+			.generate();
+		const second = zocker(schemaWithDate)
+			.setSeed(0)
+			.setRefDate(new Date("2025-09-01T10:00:00"))
+			.generate();
 
 		expect(first).not.toEqual(second);
 	});
