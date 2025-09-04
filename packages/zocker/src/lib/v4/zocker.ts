@@ -37,6 +37,7 @@ export class Zocker<Z extends z.$ZodType> {
 	];
 	private reference_generators: ReferenceGeneratorDefinition<any>[] = [];
 	private seed: number | undefined = undefined;
+	private refDate: Date | undefined = undefined;
 	private recursion_limit = 5;
 
 	private number_options: NumberGeneratorOptions = {
@@ -129,8 +130,20 @@ export class Zocker<Z extends z.$ZodType> {
 	override<S extends z.$ZodTypes | KNOWN_OVERRIDE_NAMES | z.$constructor<any>>(
 		schema: S,
 		generator:
-			| Generator<S extends KNOWN_OVERRIDE_NAMES ? OVERRIDE<S> : S extends z.$constructor<infer T> ? T : S>
-			| z.infer<S extends KNOWN_OVERRIDE_NAMES ? OVERRIDE<S> : S extends z.$constructor<infer T> ? T : S>
+			| Generator<
+					S extends KNOWN_OVERRIDE_NAMES
+						? OVERRIDE<S>
+						: S extends z.$constructor<infer T>
+						? T
+						: S
+			  >
+			| z.infer<
+					S extends KNOWN_OVERRIDE_NAMES
+						? OVERRIDE<S>
+						: S extends z.$constructor<infer T>
+						? T
+						: S
+			  >
 	) {
 		const next = this.clone();
 		const generator_function =
@@ -138,7 +151,7 @@ export class Zocker<Z extends z.$ZodType> {
 
 		const resolved_schema =
 			typeof schema !== "string"
-				? schema as z.$ZodTypes
+				? (schema as z.$ZodTypes)
 				: OVERRIDE_NAMES[schema as KNOWN_OVERRIDE_NAMES]!;
 		next.instanceof_generators = [
 			{
@@ -155,6 +168,12 @@ export class Zocker<Z extends z.$ZodType> {
 	setSeed(seed: number) {
 		const next = this.clone();
 		next.seed = seed;
+		return next;
+	}
+
+	setRefDate(refDate: Date) {
+		const next = this.clone();
+		next.refDate = refDate;
 		return next;
 	}
 
@@ -239,6 +258,7 @@ export class Zocker<Z extends z.$ZodType> {
 			semantic_context: "unspecified",
 			parent_schemas: new Map(),
 			seed: this.seed ?? Math.random() * 10_000_000,
+			refDate: this.refDate ?? new Date(),
 
 			number_options: this.number_options,
 			optional_options: this.optional_options,
@@ -254,6 +274,7 @@ export class Zocker<Z extends z.$ZodType> {
 		};
 
 		faker.seed(ctx.seed);
+		faker.setDefaultRefDate(ctx.refDate);
 		return generate(this.schema, ctx);
 	}
 

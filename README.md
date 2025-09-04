@@ -175,15 +175,15 @@ test("test 2", ()=> {
 
 ### Repeatability
 
-You can specify a seed to make the generation process repeatable. This ensures that your test are never flaky.
+You can specify a seed and a refDate to make the generation process repeatable. This ensures that your test are never flaky.
 
 ```typescript
 test("my repeatable test", () => {
-	const data = zocker(schema).setSeed(123).generate(); // always the same
+	const data = zocker(schema).setSeed(123).setRefDate(new Date("2025-09-01T10:00:00")).generate(); // always the same
 });
 ```
 
-We guarantee that the same seed will always produce the same data, with the same schema, same options and same version.
+We guarantee that the same seed and refDate will always produce the same data, with the same schema, same options and same version.
 
 ## Examples
 
@@ -244,6 +244,10 @@ Set the maximum depth of cyclic data. Defaults to 5.
 ### `.setSeed`
 
 Set the seed for the random number generator. This ensures that the generation process is repeatable. If you don't set a seed, a random one will be chosen.
+
+### `.setRefDate`
+
+Set the refDate for the faker. This ensures that the generation process is repeatable. If you don't set a refDate, a current one will be chosen.
 
 ### `.generate`
 

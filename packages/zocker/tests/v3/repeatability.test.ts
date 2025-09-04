@@ -17,30 +17,37 @@ const schema = z.object({
 	id: z.string().uuid(),
 	cuid: z.string().cuid(),
 	cuid2: z.string().cuid2(),
-	ulid: z.string().ulid()
+	ulid: z.string().ulid(),
+	date: z.string().date(),
+	datetime: z.string().datetime()
 });
+
+const refDate = new Date("2025-09-01T10:00:00");
 
 describe("repeatability", () => {
 	it("should generate identcal values for the same seed", () => {
 		const seed = 0;
-		const first = zocker(schema).setSeed(seed).generate();
+		const first = zocker(schema).setSeed(seed).setRefDate(refDate).generate();
 
 		for (let i = 0; i < 10; i++) {
-			const second = zocker(schema).setSeed(seed).generate();
+			const second = zocker(schema)
+				.setSeed(seed)
+				.setRefDate(refDate)
+				.generate();
 			expect(second).toEqual(first);
 		}
 	});
 
 	it("should generate different values for different seeds", () => {
-		const first = zocker(schema).setSeed(0).generate();
-		const second = zocker(schema).setSeed(1).generate();
+		const first = zocker(schema).setSeed(0).setRefDate(refDate).generate();
+		const second = zocker(schema).setSeed(1).setRefDate(refDate).generate();
 
 		expect(first).not.toEqual(second);
 	});
 
 	it("should generate different values if the seed is not specified", () => {
-		const first = zocker(schema).generate();
-		const second = zocker(schema).generate();
+		const first = zocker(schema).setRefDate(refDate).generate();
+		const second = zocker(schema).setRefDate(refDate).generate();
 
 		expect(first).not.toEqual(second);
 	});

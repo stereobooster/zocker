@@ -34,6 +34,7 @@ export type GenerationContext<Z extends z.$ZodType> = {
 	semantic_context: SemanticFlag;
 
 	seed: number;
+	refDate: Date;
 
 	number_options: NumberGeneratorOptions;
 	optional_options: OptionalOptions;

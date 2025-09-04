@@ -37,6 +37,7 @@ export class Zocker<Z extends z.ZodSchema> {
 	];
 	private reference_generators: ReferenceGeneratorDefinition<any>[] = [];
 	private seed: number | undefined = undefined;
+	private refDate: Date | undefined = undefined;
 	private recursion_limit = 5;
 
 	private number_options: NumberGeneratorOptions = {
@@ -156,6 +157,12 @@ export class Zocker<Z extends z.ZodSchema> {
 		return next;
 	}
 
+	setRefDate(refDate: Date) {
+		const next = this.clone();
+		next.refDate = refDate;
+		return next;
+	}
+
 	setDepthLimit(limit: number) {
 		const next = this.clone();
 		next.recursion_limit = limit;
@@ -237,6 +244,7 @@ export class Zocker<Z extends z.ZodSchema> {
 			semantic_context: "unspecified",
 			parent_schemas: new Map(),
 			seed: this.seed ?? Math.random() * 10_000_000,
+			refDate: this.refDate ?? new Date(),
 
 			number_options: this.number_options,
 			optional_options: this.optional_options,
@@ -252,6 +260,7 @@ export class Zocker<Z extends z.ZodSchema> {
 		};
 
 		faker.seed(ctx.seed);
+		faker.setDefaultRefDate(ctx.refDate);
 		return generate(this.schema, ctx);
 	}
 
