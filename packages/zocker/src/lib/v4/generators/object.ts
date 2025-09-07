@@ -23,7 +23,7 @@ const generate_object = <T extends z.$ZodShape>(
 		const property_schema = entry[1] as Value;
 
 		const prev_semantic_context = ctx.semantic_context;
-		const semantic_flag = get_semantic_flag(String(key));
+		const semantic_flag = get_semantic_flag(String(key), ctx.semantic_flag_map);
 
 		try {
 			ctx.path.push(key);

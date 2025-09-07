@@ -1,4 +1,4 @@
-export type SemanticFlag =
+export type SemanticFlagStr =
 	| "unspecified"
 	| "key"
 	| "fullname"
@@ -30,79 +30,92 @@ export type SemanticFlag =
 	| "municipality"
 	| "unique-id";
 
-const paragraph_triggers = [
-	"about",
-	"description",
-	"paragraph",
-	"text",
-	"body",
-	"content"
-];
-const sentence_triggers = ["sentence", "line", "headline", "heading"];
-const jobtitle_triggers = [
-	"job",
-	"title",
-	"position",
-	"role",
-	"occupation",
-	"profession",
-	"career"
-];
+export type SemanticFlag = SemanticFlagStr | (() => any);
 
-const delimiters = [",", ";", ":", "|", "/", "\\", "-", "_", " "];
+export type SemanitcFlagMap = {
+	[key: string | symbol]: SemanticFlag | SemanitcFlagMap;
+};
 
-export function get_semantic_flag(str: string): SemanticFlag {
+const default_semantic_flag_map: SemanitcFlagMap = {
+	name: {
+		first: "firstname",
+		last: "lastname",
+		"": "fullname" // else
+	},
+	street: "street",
+	city: "city",
+	country: "country",
+	// paragraph
+	about: "paragraph",
+	description: "paragraph",
+	paragraph: "paragraph",
+	text: "paragraph",
+	body: "paragraph",
+	content: "paragraph",
+	// sentence
+	sentence: "sentence",
+	line: "sentence",
+	headline: "sentence",
+	heading: "sentence",
+	word: "word",
+	// jobtitle
+	job: "jobtitle",
+	title: "jobtitle",
+	position: "jobtitle",
+	role: "jobtitle",
+	occupation: "jobtitle",
+	profession: "jobtitle",
+	career: "jobtitle",
+	phone: "phoneNumber",
+	age: "age",
+	hex: "color-hex",
+	color: "color",
+	zip: "zip",
+	week: {
+		day: "weekday"
+	},
+	birthday: "birthday",
+	year: "year",
+	month: "month",
+	day: "day-of-the-month",
+	hour: "hour",
+	minute: "minute",
+	second: "second",
+	millisecond: "millisecond",
+	// gender
+	gender: "gender",
+	sex: "gender",
+	// municipality
+	municipality: "municipality",
+	// city: "municipality",
+	town: "municipality",
+	place: "municipality",
+	region: "municipality",
+	state: "municipality",
+	id: "unique-id"
+};
+
+function select_semantic_flag(
+	str: string,
+	semantic_flag_map: SemanitcFlagMap
+): SemanticFlag | undefined {
+	for (const key in Object.keys(semantic_flag_map)) {
+		if (!str.includes(key)) continue;
+		const val = semantic_flag_map[key]!;
+		const res = typeof val === "object" ? select_semantic_flag(str, val) : val;
+		if (res === undefined) continue;
+		return res;
+	}
+}
+
+export function get_semantic_flag(
+	str: string,
+	semantic_flag_map?: SemanitcFlagMap
+): SemanticFlag {
 	str = str.toLowerCase().trim();
-
-	for (const delimiter of delimiters) {
-		str = str.split(delimiter).join(" ");
-	}
-
-	if (str.includes("name")) {
-		if (str.includes("first")) return "firstname";
-		if (str.includes("last")) return "lastname";
-		return "fullname";
-	}
-
-	if (str.includes("street")) return "street";
-	if (str.includes("city")) return "city";
-	if (str.includes("country")) return "country";
-
-	if (paragraph_triggers.some((t) => str.includes(t))) return "paragraph";
-	if (sentence_triggers.some((t) => str.includes(t))) return "sentence";
-	if (str.includes("word")) return "word";
-
-	if (jobtitle_triggers.some((t) => str.includes(t))) return "jobtitle";
-
-	if (str.includes("phone")) return "phoneNumber";
-	if (str.includes("age")) return "age";
-
-	if (str.includes("hex")) return "color-hex";
-	if (str.includes("color")) return "color";
-	if (str.includes("zip")) return "zip";
-
-	if (str.includes("week") && str.includes("day")) return "weekday";
-	if (str.includes("birthday")) return "birthday";
-	if (str.includes("year")) return "year";
-	if (str.includes("month")) return "month";
-	if (str.includes("day")) return "day-of-the-month";
-	if (str.includes("hour")) return "hour";
-	if (str.includes("minute")) return "minute";
-	if (str.includes("second")) return "second";
-	if (str.includes("millisecond")) return "millisecond";
-
-	if (str.includes("gender") || str.includes("sex")) return "gender";
-
-	if (
-		str.includes("municipality") ||
-		str.includes("city") ||
-		str.includes("town") ||
-		str.includes("place") ||
-		str.includes("region") ||
-		str.includes("state")
-	)
-		return "municipality";
-
-	if (str.includes("id")) return "unique-id";
-	return "unspecified";
+	return (
+		(semantic_flag_map && select_semantic_flag(str, semantic_flag_map)) ||
+		select_semantic_flag(str, default_semantic_flag_map) ||
+		"unspecified"
+	);
 }

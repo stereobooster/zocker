@@ -7,7 +7,7 @@ import {
 	InstanceofGeneratorDefinition,
 	ReferenceGeneratorDefinition
 } from "./zocker.js";
-import { SemanticFlag } from "./semantics.js";
+import { SemanticFlag, SemanitcFlagMap } from "./semantics.js";
 import { NumberGeneratorOptions } from "./generators/numbers.js";
 import { OptionalOptions } from "./generators/optional.js";
 import { NullableOptions } from "./generators/nullable.js";
@@ -32,6 +32,7 @@ export type GenerationContext<Z extends z.$ZodType> = {
 
 	path: (string | number | symbol)[];
 	semantic_context: SemanticFlag;
+	semantic_flag_map?: SemanitcFlagMap;
 
 	seed: number;
 

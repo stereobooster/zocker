@@ -5,7 +5,7 @@ import { InstanceofGeneratorDefinition } from "../zocker.js";
 import { Generator } from "../generate.js";
 import { lcm } from "../utils/lcm.js";
 import { InvalidSchemaException } from "../exceptions.js";
-import { SemanticFlag } from "../semantics.js";
+import { SemanticFlagStr } from "../semantics.js";
 
 export type NumberGeneratorOptions = {
 	extreme_value_chance: number;
@@ -25,7 +25,7 @@ const generate_number: Generator<z.$ZodNumber> = (number_schema, ctx) => {
 		let proposed_number = NaN;
 
 		const semantic_generators: {
-			[flag in SemanticFlag]?: () => number;
+			[flag in SemanticFlagStr]?: () => number;
 		} = {
 			age: () => faker.number.int({ min: 0, max: 120 }),
 			year: () => faker.number.int({ min: 1200, max: 3000 }),
@@ -38,7 +38,10 @@ const generate_number: Generator<z.$ZodNumber> = (number_schema, ctx) => {
 			weekday: () => faker.number.int({ min: 0, max: 6 })
 		};
 
-		const generator = semantic_generators[ctx.semantic_context];
+		const generator =
+			typeof ctx.semantic_context === "function"
+				? ctx.semantic_context
+				: semantic_generators[ctx.semantic_context];
 		if (!generator)
 			throw new Error(
 				"No generator found for semantic context - Falling back to random number"

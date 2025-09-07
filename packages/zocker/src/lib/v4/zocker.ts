@@ -12,6 +12,7 @@ import { SetOptions } from "./generators/set.js";
 import { AnyOptions } from "./generators/any.js";
 import { ArrayOptions } from "./generators/array.js";
 import { ObjectOptions } from "./generators/object.js";
+import { SemanitcFlagMap } from "./semantics.js";
 
 export type InstanceofGeneratorDefinition<Z extends z.$ZodType> = {
 	schema: Z;
@@ -37,6 +38,7 @@ export class Zocker<Z extends z.$ZodType> {
 	];
 	private reference_generators: ReferenceGeneratorDefinition<any>[] = [];
 	private seed: number | undefined = undefined;
+	private semantic_flag_map?: SemanitcFlagMap;
 	private recursion_limit = 5;
 
 	private number_options: NumberGeneratorOptions = {
@@ -129,8 +131,20 @@ export class Zocker<Z extends z.$ZodType> {
 	override<S extends z.$ZodTypes | KNOWN_OVERRIDE_NAMES | z.$constructor<any>>(
 		schema: S,
 		generator:
-			| Generator<S extends KNOWN_OVERRIDE_NAMES ? OVERRIDE<S> : S extends z.$constructor<infer T> ? T : S>
-			| z.infer<S extends KNOWN_OVERRIDE_NAMES ? OVERRIDE<S> : S extends z.$constructor<infer T> ? T : S>
+			| Generator<
+					S extends KNOWN_OVERRIDE_NAMES
+						? OVERRIDE<S>
+						: S extends z.$constructor<infer T>
+						? T
+						: S
+			  >
+			| z.infer<
+					S extends KNOWN_OVERRIDE_NAMES
+						? OVERRIDE<S>
+						: S extends z.$constructor<infer T>
+						? T
+						: S
+			  >
 	) {
 		const next = this.clone();
 		const generator_function =
@@ -138,7 +152,7 @@ export class Zocker<Z extends z.$ZodType> {
 
 		const resolved_schema =
 			typeof schema !== "string"
-				? schema as z.$ZodTypes
+				? (schema as z.$ZodTypes)
 				: OVERRIDE_NAMES[schema as KNOWN_OVERRIDE_NAMES]!;
 		next.instanceof_generators = [
 			{
@@ -155,6 +169,12 @@ export class Zocker<Z extends z.$ZodType> {
 	setSeed(seed: number) {
 		const next = this.clone();
 		next.seed = seed;
+		return next;
+	}
+
+	setSemanticFlagMap(semantic_flag_map: SemanitcFlagMap) {
+		const next = this.clone();
+		next.semantic_flag_map = semantic_flag_map;
 		return next;
 	}
 
@@ -250,7 +270,9 @@ export class Zocker<Z extends z.$ZodType> {
 			any_options: this.any_options,
 			unknown_options: this.unknown_options,
 			array_options: this.array_options,
-			object_options: this.object_options
+			object_options: this.object_options,
+
+			semantic_flag_map: this.semantic_flag_map
 		};
 
 		faker.seed(ctx.seed);

@@ -13,7 +13,7 @@ import {
 } from "./length-constraints.js";
 import Randexp from "randexp";
 import { pick } from "../../utils/random.js";
-import { SemanticFlag } from "../../semantics.js";
+import { SemanticFlagStr } from "../../semantics.js";
 import z4 from "zod/v4";
 import { legacyFormatString } from "./legacy.js";
 
@@ -134,7 +134,7 @@ function generateStringWithoutFormat(
 	cc: ContentConstraints
 ) {
 	const semantic_generators: {
-		[flag in SemanticFlag]?: () => string;
+		[flag in SemanticFlagStr]?: () => string;
 	} = {
 		fullname: faker.person.fullName,
 		firstname: faker.person.firstName,
@@ -159,7 +159,10 @@ function generateStringWithoutFormat(
 			faker.lorem.paragraphs(faker.number.int({ min: 1, max: 5 }))
 	};
 
-	const generator = semantic_generators[ctx.semantic_context];
+	const generator =
+		typeof ctx.semantic_context === "function"
+			? ctx.semantic_context
+			: semantic_generators[ctx.semantic_context];
 	if (!generator)
 		throw new Error(
 			"No semantic generator found for context - falling back to random string"
